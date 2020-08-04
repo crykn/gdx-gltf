@@ -14,11 +14,13 @@ ext {
     appName = "gdx-gltf"
     gdxVersion = '1.9.10'
     junitVersion = '4.12'
+    guacamoleVersion = '0.2.1'
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
+    maven { url 'https://jitpack.io' }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url "https://oss.sonatype.org/content/repositories/releases/" }
 }
@@ -36,11 +38,12 @@ apply plugin: "java"
 
 
 dependencies {
-    compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+    implementation "com.github.crykn.guacamole:gdx:$guacamoleVersion"
     
-    testCompile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
-    testCompile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-    testCompile "junit:junit:$junitVersion"
+    testImplementation "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+    testImplementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    testImplementation "junit:junit:$junitVersion"
 }
 
 sourceCompatibility = 1.6

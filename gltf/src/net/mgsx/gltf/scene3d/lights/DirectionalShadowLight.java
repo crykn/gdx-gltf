@@ -14,6 +14,8 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Disposable;
 
+import de.damios.guacamole.gdx.graphics.NestableFrameBuffer;
+
 /**
  * Copied from original deprecated DirectionalShadowLight with new features.
  */
@@ -36,7 +38,7 @@ public class DirectionalShadowLight extends DirectionalLightEx implements Shadow
 
 	public DirectionalShadowLight(int shadowMapWidth, int shadowMapHeight, float shadowViewportWidth,
 			float shadowViewportHeight, float shadowNear, float shadowFar) {
-		fbo = new FrameBuffer(Format.RGBA8888, shadowMapWidth, shadowMapHeight, true);
+		fbo = new NestableFrameBuffer(Format.RGBA8888, shadowMapWidth, shadowMapHeight, true);
 		cam = new OrthographicCamera(shadowViewportWidth, shadowViewportHeight);
 		cam.near = shadowNear;
 		cam.far = shadowFar;
@@ -50,7 +52,7 @@ public class DirectionalShadowLight extends DirectionalLightEx implements Shadow
 			if (fbo != null) {
 				fbo.dispose();
 			}
-			fbo = new FrameBuffer(Format.RGBA8888, shadowMapWidth, shadowMapHeight, true);
+			fbo = new NestableFrameBuffer(Format.RGBA8888, shadowMapWidth, shadowMapHeight, true);
 		}
 		return this;
 	}
