@@ -11,41 +11,45 @@ import com.badlogic.gdx.graphics.g3d.environment.SpotLight;
 
 public class LightUtils {
 
-	public static class LightsInfo{
+	public static class LightsInfo {
 		public int dirLights = 0;
 		public int pointLights = 0;
 		public int spotLights = 0;
 		public int miscLights = 0;
-		
-		public void reset(){
+
+		public void reset() {
 			dirLights = 0;
 			pointLights = 0;
 			spotLights = 0;
 			miscLights = 0;
 		}
 	}
-	
-	public static LightsInfo getLightsInfo(LightsInfo info, Environment environment){
+
+	public static LightsInfo getLightsInfo(LightsInfo info, Environment environment) {
 		info.reset();
-		DirectionalLightsAttribute dla = environment.get(DirectionalLightsAttribute.class, DirectionalLightsAttribute.Type);
-		if(dla != null) info.dirLights = dla.lights.size;
+		DirectionalLightsAttribute dla = environment.get(DirectionalLightsAttribute.class,
+				DirectionalLightsAttribute.Type);
+		if (dla != null)
+			info.dirLights = dla.lights.size;
 		PointLightsAttribute pla = environment.get(PointLightsAttribute.class, PointLightsAttribute.Type);
-		if(pla != null) info.pointLights = pla.lights.size;
+		if (pla != null)
+			info.pointLights = pla.lights.size;
 		SpotLightsAttribute sla = environment.get(SpotLightsAttribute.class, SpotLightsAttribute.Type);
-		if(sla != null) info.spotLights = sla.lights.size;
+		if (sla != null)
+			info.spotLights = sla.lights.size;
 		return info;
 	}
-	
-	public static LightsInfo getLightsInfo(LightsInfo info, Iterable<BaseLight> lights){
+
+	public static LightsInfo getLightsInfo(LightsInfo info, Iterable<BaseLight> lights) {
 		info.reset();
-		for(BaseLight light : lights){
-			if(light instanceof DirectionalLight){
+		for (BaseLight light : lights) {
+			if (light instanceof DirectionalLight) {
 				info.dirLights++;
-			}else if(light instanceof PointLight){
+			} else if (light instanceof PointLight) {
 				info.pointLights++;
-			}else if(light instanceof SpotLight){
+			} else if (light instanceof SpotLight) {
 				info.spotLights++;
-			}else{
+			} else {
 				info.miscLights++;
 			}
 		}

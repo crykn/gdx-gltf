@@ -23,11 +23,11 @@ public class GLTF extends GLTFObject {
 	public Array<GLTFNode> nodes;
 	public Array<GLTFCamera> cameras;
 	public Array<GLTFMesh> meshes;
-	
+
 	public Array<GLTFImage> images;
 	public Array<GLTFSampler> samplers;
 	public Array<GLTFTexture> textures;
-	
+
 	public Array<GLTFAnimation> animations;
 	public Array<GLTFSkin> skins;
 
@@ -35,7 +35,7 @@ public class GLTF extends GLTFObject {
 	public Array<GLTFMaterial> materials;
 	public Array<GLTFBufferView> bufferViews;
 	public Array<GLTFBuffer> buffers;
-	
+
 	public Array<String> extensionsUsed;
 	public Array<String> extensionsRequired;
 }

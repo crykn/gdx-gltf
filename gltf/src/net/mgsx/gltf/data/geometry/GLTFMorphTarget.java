@@ -17,10 +17,10 @@ public class GLTFMorphTarget extends ObjectMap<String, Integer> implements Seria
 
 	@Override
 	public void read(Json json, JsonValue jsonData) {
-		for(JsonIterator i = jsonData.iterator(); i.hasNext() ; ){
+		for (JsonIterator i = jsonData.iterator(); i.hasNext();) {
 			JsonValue e = i.next();
 			put(e.name, e.asInt());
 		}
 	}
-	
+
 }

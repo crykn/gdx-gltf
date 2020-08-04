@@ -6,10 +6,10 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.ObjectMap.Entry;
 
-public class GLTFExtensions implements Serializable{
+public class GLTFExtensions implements Serializable {
 
 	private static final Json json = new Json();
-	
+
 	private JsonValue value;
 	private ObjectMap<String, Object> extentions = new ObjectMap<String, Object>();
 
@@ -24,18 +24,17 @@ public class GLTFExtensions implements Serializable{
 	public void read(Json json, JsonValue jsonData) {
 		value = jsonData;
 	}
-	
-	public <T> T get(Class<T> type, String ext) 
-	{
-		T result = (T)extentions.get(ext);
-		if(result == null && value != null){
+
+	public <T> T get(Class<T> type, String ext) {
+		T result = (T) extentions.get(ext);
+		if (result == null && value != null) {
 			result = json.readValue(type, value.get(ext));
 			extentions.put(ext, result);
 		}
 		return result;
 	}
-	
-	public void set(String ext, Object object){
+
+	public void set(String ext, Object object) {
 		extentions.put(ext, object);
 	}
 }

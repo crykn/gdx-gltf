@@ -13,14 +13,15 @@ import net.mgsx.gltf.scene3d.lights.PointLightEx;
 import net.mgsx.gltf.scene3d.lights.SpotLightEx;
 
 /**
- * {@link net.mgsx.gltf.data.scene.GLTFNode} and {@link net.mgsx.gltf.data.GLTF} (root) extension
+ * {@link net.mgsx.gltf.data.scene.GLTFNode} and {@link net.mgsx.gltf.data.GLTF}
+ * (root) extension
+ * 
  * @see https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual
  */
 abstract public class KHRLightsPunctual {
-	
+
 	public static final String EXT = "KHR_lights_punctual";
-	
-	
+
 	public static class GLTFSpotLight {
 		public float innerConeAngle = 0;
 		public float outerConeAngle = MathUtils.PI / 4f;
@@ -30,71 +31,76 @@ abstract public class KHRLightsPunctual {
 		public static final String TYPE_DIRECTIONAL = "directional";
 		public static final String TYPE_POINT = "point";
 		public static final String TYPE_SPOT = "spot";
-		
+
 		public String name = "";
-		public float [] color = {1f, 1f, 1f};
-		
-		/** 
-		 * in Candela for point/spot lights : Ev(lx) = Iv(cd) / (d(m))2 
-		 * in Lux for directional lights : Ev(lx)
+		public float[] color = { 1f, 1f, 1f };
+
+		/**
+		 * in Candela for point/spot lights : Ev(lx) = Iv(cd) / (d(m))2 in Lux for
+		 * directional lights : Ev(lx)
 		 */
 		public float intensity = 1f;
 		public String type;
-		
-		/** 
-		 * Hint defining a distance cutoff at which the light's intensity may be considered to have reached zero. 
-		 * When null, range is assumed to be infinite.
+
+		/**
+		 * Hint defining a distance cutoff at which the light's intensity may be
+		 * considered to have reached zero. When null, range is assumed to be infinite.
 		 */
 		public Float range;
-		
+
 		public GLTFSpotLight spot;
 	}
+
 	public static class GLTFLights {
 		public Array<GLTFLight> lights;
 	}
+
 	public static class GLTFLightNode {
 		public Integer light;
 	}
-	
-	
+
 	public static BaseLight map(GLTFLight light) {
-		if(GLTFLight.TYPE_DIRECTIONAL.equals(light.type)){
+		if (GLTFLight.TYPE_DIRECTIONAL.equals(light.type)) {
 			DirectionalLightEx dl = new DirectionalLightEx();
 			dl.baseColor.set(GLTFTypes.mapColor(light.color, Color.WHITE));
 			dl.intensity = light.intensity;
 			return dl;
-		}else if(GLTFLight.TYPE_POINT.equals(light.type)){
+		} else if (GLTFLight.TYPE_POINT.equals(light.type)) {
 			PointLightEx pl = new PointLightEx();
 			pl.color.set(GLTFTypes.mapColor(light.color, Color.WHITE));
 			// Blender exported intensity is the raw value in Watts
 			// GLTF spec. states it's in Candela which is lumens per square radian (lm/sr).
 			// adjustement is made empirically here (comparing with Blender rendering)
-			// TODO find if it's a GLTF Blender exporter issue and find the right conversion.
+			// TODO find if it's a GLTF Blender exporter issue and find the right
+			// conversion.
 			pl.intensity = light.intensity / 10f;
 			pl.range = light.range;
 			return pl;
-		}else if(GLTFLight.TYPE_SPOT.equals(light.type)){
+		} else if (GLTFLight.TYPE_SPOT.equals(light.type)) {
 			SpotLightEx sl = new SpotLightEx();
-			if(light.spot == null) throw new GLTFIllegalException("spot property required for spot light type");
+			if (light.spot == null)
+				throw new GLTFIllegalException("spot property required for spot light type");
 			sl.color.set(GLTFTypes.mapColor(light.color, Color.WHITE));
-			
+
 			// same hack as point lights (see point light above)
 			sl.intensity = light.intensity / 10f;
 			sl.range = light.range;
-			
-			// from https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_lights_punctual/README.md#inner-and-outer-cone-angles
-			float cosOuterAngle = (float)Math.cos(light.spot.outerConeAngle);
-			float cosInnerAngle = (float)Math.cos(light.spot.innerConeAngle);
+
+			// from
+			// https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_lights_punctual/README.md#inner-and-outer-cone-angles
+			float cosOuterAngle = (float) Math.cos(light.spot.outerConeAngle);
+			float cosInnerAngle = (float) Math.cos(light.spot.innerConeAngle);
 			float lightAngleScale = 1.0f / Math.max(0.001f, cosInnerAngle - cosOuterAngle);
 			float lightAngleOffset = -cosOuterAngle * lightAngleScale;
-			
-			// XXX we hack libgdx cutoffAngle and exponent variables to store cached scale/offset values.
+
+			// XXX we hack libgdx cutoffAngle and exponent variables to store cached
+			// scale/offset values.
 			// it's not an issue since libgdx default shader doesn't implement spot lights.
-			
+
 			sl.cutoffAngle = lightAngleOffset;
 			sl.exponent = lightAngleScale;
 			return sl;
-		} else{
+		} else {
 			throw new GdxRuntimeException("unsupported light type " + light.type);
 		}
 	}

@@ -16,12 +16,11 @@ import net.mgsx.gltf.loaders.exceptions.GLTFIllegalException;
 import net.mgsx.gltf.loaders.shared.data.DataFileResolver;
 import net.mgsx.gltf.loaders.shared.texture.PixmapBinaryLoaderHack;
 
-public class SeparatedDataFileResolver implements DataFileResolver
-{
+public class SeparatedDataFileResolver implements DataFileResolver {
 	private ObjectMap<Integer, ByteBuffer> bufferMap = new ObjectMap<Integer, ByteBuffer>();
 	private GLTF glModel;
 	private FileHandle path;
-	
+
 	@Override
 	public void load(FileHandle file) {
 		glModel = new Json().fromJson(GLTF.class, file);
@@ -33,23 +32,23 @@ public class SeparatedDataFileResolver implements DataFileResolver
 	public GLTF getRoot() {
 		return glModel;
 	}
-	
+
 	private ObjectMap<Integer, ByteBuffer> loadBuffers(FileHandle path) {
-		
-		if(glModel.buffers != null){
-			for(int i=0 ; i<glModel.buffers.size ; i++){
+
+		if (glModel.buffers != null) {
+			for (int i = 0; i < glModel.buffers.size; i++) {
 				GLTFBuffer glBuffer = glModel.buffers.get(i);
 				ByteBuffer buffer = ByteBuffer.allocate(glBuffer.byteLength);
 				buffer.order(ByteOrder.LITTLE_ENDIAN);
-				if(glBuffer.uri.startsWith("data:")){
+				if (glBuffer.uri.startsWith("data:")) {
 					// data:application/octet-stream;base64,
-					String [] headerBody = glBuffer.uri.split(",", 2);
+					String[] headerBody = glBuffer.uri.split(",", 2);
 					String header = headerBody[0];
 					// System.out.println(header);
 					String body = headerBody[1];
-					byte [] data = Base64Coder.decode(body);
+					byte[] data = Base64Coder.decode(body);
 					buffer.put(data);
-				}else{
+				} else {
 					FileHandle file = path.child(glBuffer.uri);
 					buffer.put(file.readBytes());
 				}
@@ -63,29 +62,29 @@ public class SeparatedDataFileResolver implements DataFileResolver
 	public ByteBuffer getBuffer(int buffer) {
 		return bufferMap.get(buffer);
 	}
-	
+
 	@Override
 	public Pixmap load(GLTFImage glImage) {
-		if(glImage.uri == null){
+		if (glImage.uri == null) {
 			throw new GLTFIllegalException("GLTF image URI cannot be null");
-		}else if(glImage.uri.startsWith("data:")){
+		} else if (glImage.uri.startsWith("data:")) {
 			// data:application/octet-stream;base64,
-			String [] headerBody = glImage.uri.split(",", 2);
+			String[] headerBody = glImage.uri.split(",", 2);
 			String header = headerBody[0];
 			System.out.println(header);
 			String body = headerBody[1];
-			byte [] data = Base64Coder.decode(body);
+			byte[] data = Base64Coder.decode(body);
 			return PixmapBinaryLoaderHack.load(data, 0, data.length);
-		}else{
+		} else {
 			return new Pixmap(path.child(glImage.uri));
 		}
 	}
 
 	public FileHandle getImageFile(GLTFImage glImage) {
-		if(glImage.uri != null && !glImage.uri.startsWith("data:")){
+		if (glImage.uri != null && !glImage.uri.startsWith("data:")) {
 			return path.child(glImage.uri);
 		}
 		return null;
 	}
-	
+
 }

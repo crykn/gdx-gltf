@@ -11,11 +11,12 @@ import com.badlogic.gdx.utils.Array;
 import net.mgsx.gltf.loaders.shared.SceneAssetLoaderParameters;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
 
-public class GLBAssetLoader  extends AsynchronousAssetLoader<SceneAsset, SceneAssetLoaderParameters>{
+public class GLBAssetLoader extends AsynchronousAssetLoader<SceneAsset, SceneAssetLoaderParameters> {
 
 	public GLBAssetLoader() {
 		this(new InternalFileHandleResolver());
 	}
+
 	public GLBAssetLoader(FileHandleResolver resolver) {
 		super(resolver);
 	}

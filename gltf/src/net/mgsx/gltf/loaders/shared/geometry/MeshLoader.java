@@ -37,278 +37,284 @@ import net.mgsx.gltf.scene3d.model.NodePlus;
 import net.mgsx.gltf.scene3d.model.WeightVector;
 
 public class MeshLoader {
-	
+
 	private ObjectMap<GLTFMesh, Array<NodePart>> meshMap = new ObjectMap<GLTFMesh, Array<NodePart>>();
 	private final Array<Mesh> meshes = new Array<Mesh>();
 	private int maxBones;
-	
-	public void load(Node node, GLTFMesh glMesh, DataResolver dataResolver, MaterialLoader materialLoader) 
-	{
-		((NodePlus)node).morphTargetNames = BlenderShapeKeys.parse(glMesh);
-		
+
+	public void load(Node node, GLTFMesh glMesh, DataResolver dataResolver, MaterialLoader materialLoader) {
+		((NodePlus) node).morphTargetNames = BlenderShapeKeys.parse(glMesh);
+
 		Array<NodePart> parts = meshMap.get(glMesh);
-		if(parts == null){
+		if (parts == null) {
 			parts = new Array<NodePart>();
-			
-			for(GLTFPrimitive primitive : glMesh.primitives){
-				
+
+			for (GLTFPrimitive primitive : glMesh.primitives) {
+
 				// indices
-				short [] indices = loadIndices(primitive, dataResolver);
+				short[] indices = loadIndices(primitive, dataResolver);
 				int maxIndices = indices == null ? 0 : indices.length;
-				
+
 				// vertices
 				Array<VertexAttribute> vertexAttributes = new Array<VertexAttribute>();
 				Array<GLTFAccessor> glAccessors = new Array<GLTFAccessor>();
-				
+
 				Array<int[]> bonesIndices = new Array<int[]>();
 				Array<float[]> bonesWeights = new Array<float[]>();
-				
+
 				boolean hasNormals = false;
-				
-				for(Entry<String, Integer> attribute : primitive.attributes){
+
+				for (Entry<String, Integer> attribute : primitive.attributes) {
 					String attributeName = attribute.key;
 					int accessorId = attribute.value;
 					GLTFAccessor accessor = dataResolver.getAccessor(accessorId);
 					boolean rawAttribute = true;
-					
-					if(attributeName.equals("POSITION")){
+
+					if (attributeName.equals("POSITION")) {
 						vertexAttributes.add(VertexAttribute.Position());
-					}else if(attributeName.equals("NORMAL")){
+					} else if (attributeName.equals("NORMAL")) {
 						vertexAttributes.add(VertexAttribute.Normal());
 						hasNormals = true;
-					}else if(attributeName.equals("TANGENT")){
+					} else if (attributeName.equals("TANGENT")) {
 						vertexAttributes.add(new VertexAttribute(Usage.Tangent, 4, ShaderProgram.TANGENT_ATTRIBUTE));
-					}else if(attributeName.startsWith("TEXCOORD_")){
+					} else if (attributeName.startsWith("TEXCOORD_")) {
 						int unit = parseAttributeUnit(attributeName);
 						vertexAttributes.add(VertexAttribute.TexCoords(unit));
-					}else if(attributeName.startsWith("COLOR_")){
+					} else if (attributeName.startsWith("COLOR_")) {
 						int unit = parseAttributeUnit(attributeName);
-						if(unit == 0){
+						if (unit == 0) {
 							vertexAttributes.add(VertexAttribute.ColorUnpacked());
-						}else{
-							vertexAttributes.add(new VertexAttribute(Usage.ColorUnpacked, 4, ShaderProgram.COLOR_ATTRIBUTE + unit, unit));
+						} else {
+							vertexAttributes.add(new VertexAttribute(Usage.ColorUnpacked, 4,
+									ShaderProgram.COLOR_ATTRIBUTE + unit, unit));
 						}
-					}else if(attributeName.startsWith("WEIGHTS_")){
+					} else if (attributeName.startsWith("WEIGHTS_")) {
 						rawAttribute = false;
-						
-						if(!GLTFTypes.TYPE_VEC4.equals(accessor.type)){
+
+						if (!GLTFTypes.TYPE_VEC4.equals(accessor.type)) {
 							throw new GLTFIllegalException("illegal weight attribute type: " + accessor.type);
 						}
-						
-						int unit = parseAttributeUnit(attributeName);
-						if(unit >= bonesWeights.size) bonesWeights.setSize(unit+1);
 
-						if(accessor.componentType == GLTFTypes.C_FLOAT){
+						int unit = parseAttributeUnit(attributeName);
+						if (unit >= bonesWeights.size)
+							bonesWeights.setSize(unit + 1);
+
+						if (accessor.componentType == GLTFTypes.C_FLOAT) {
 							bonesWeights.set(unit, dataResolver.readBufferFloat(accessorId));
-						}else if(accessor.componentType == GLTFTypes.C_USHORT){ 
+						} else if (accessor.componentType == GLTFTypes.C_USHORT) {
 							throw new GLTFUnsupportedException("unsigned short weight attribute not supported");
-						}else if(accessor.componentType == GLTFTypes.C_UBYTE){ 
+						} else if (accessor.componentType == GLTFTypes.C_UBYTE) {
 							throw new GLTFUnsupportedException("unsigned byte weight attribute not supported");
-						}else{
+						} else {
 							throw new GLTFIllegalException("illegal weight attribute type: " + accessor.componentType);
 						}
-					}else if(attributeName.startsWith("JOINTS_")){
+					} else if (attributeName.startsWith("JOINTS_")) {
 						rawAttribute = false;
-						
-						if(!GLTFTypes.TYPE_VEC4.equals(accessor.type)){
+
+						if (!GLTFTypes.TYPE_VEC4.equals(accessor.type)) {
 							throw new GLTFIllegalException("illegal joints attribute type: " + accessor.type);
 						}
-						
+
 						int unit = parseAttributeUnit(attributeName);
-						if(unit >= bonesIndices.size) bonesIndices.setSize(unit+1);
-						
-						if(accessor.componentType == GLTFTypes.C_UBYTE){ // unsigned byte
+						if (unit >= bonesIndices.size)
+							bonesIndices.setSize(unit + 1);
+
+						if (accessor.componentType == GLTFTypes.C_UBYTE) { // unsigned byte
 							bonesIndices.set(unit, dataResolver.readBufferUByte(accessorId));
-						}else if(accessor.componentType == GLTFTypes.C_USHORT){ // unsigned short
+						} else if (accessor.componentType == GLTFTypes.C_USHORT) { // unsigned short
 							bonesIndices.set(unit, dataResolver.readBufferUShort(accessorId));
-						}else{
+						} else {
 							throw new GLTFIllegalException("illegal type for joints: " + accessor.componentType);
 						}
-						if(accessor.max != null){
-							for(float boneIndex : accessor.max){
-								maxBones = Math.max(maxBones, (int)boneIndex + 1);
+						if (accessor.max != null) {
+							for (float boneIndex : accessor.max) {
+								maxBones = Math.max(maxBones, (int) boneIndex + 1);
 							}
-						}else{
+						} else {
 							// compute from data
-							for(int boneIndex : bonesIndices.get(unit)){
+							for (int boneIndex : bonesIndices.get(unit)) {
 								maxBones = Math.max(maxBones, boneIndex + 1);
 							}
 						}
-					}
-					else if(attributeName.startsWith("_")){
+					} else if (attributeName.startsWith("_")) {
 						Gdx.app.error("GLTF", "skip unsupported custom attribute: " + attributeName);
-					}else{
+					} else {
 						throw new GLTFIllegalException("illegal attribute type " + attributeName);
 					}
-					
-					if(rawAttribute){
+
+					if (rawAttribute) {
 						glAccessors.add(accessor);
 					}
 				}
-				
+
 				// morph targets
-				if(primitive.targets != null){
+				if (primitive.targets != null) {
 					int morphTargetCount = primitive.targets.size;
-					((NodePlus)node).weights = new WeightVector(morphTargetCount);
-					
-					for(int t=0 ; t<primitive.targets.size ; t++){
+					((NodePlus) node).weights = new WeightVector(morphTargetCount);
+
+					for (int t = 0; t < primitive.targets.size; t++) {
 						int unit = t;
-						for(Entry<String, Integer> attribute : primitive.targets.get(t)){
+						for (Entry<String, Integer> attribute : primitive.targets.get(t)) {
 							String attributeName = attribute.key;
 							int accessorId = attribute.value.intValue();
 							GLTFAccessor accessor = dataResolver.getAccessor(accessorId);
 							glAccessors.add(accessor);
-							
-							if(attributeName.equals("POSITION")){
-								vertexAttributes.add(new VertexAttribute(PBRVertexAttributes.Usage.PositionTarget, 3, ShaderProgram.POSITION_ATTRIBUTE+unit, unit));
-							}else if(attributeName.equals("NORMAL")){
-								vertexAttributes.add(new VertexAttribute(PBRVertexAttributes.Usage.NormalTarget, 3, ShaderProgram.NORMAL_ATTRIBUTE + unit, unit));
-							}else if(attributeName.equals("TANGENT")){
-								vertexAttributes.add(new VertexAttribute(PBRVertexAttributes.Usage.TangentTarget, 3, ShaderProgram.TANGENT_ATTRIBUTE + unit, unit));
-							}else{
+
+							if (attributeName.equals("POSITION")) {
+								vertexAttributes.add(new VertexAttribute(PBRVertexAttributes.Usage.PositionTarget, 3,
+										ShaderProgram.POSITION_ATTRIBUTE + unit, unit));
+							} else if (attributeName.equals("NORMAL")) {
+								vertexAttributes.add(new VertexAttribute(PBRVertexAttributes.Usage.NormalTarget, 3,
+										ShaderProgram.NORMAL_ATTRIBUTE + unit, unit));
+							} else if (attributeName.equals("TANGENT")) {
+								vertexAttributes.add(new VertexAttribute(PBRVertexAttributes.Usage.TangentTarget, 3,
+										ShaderProgram.TANGENT_ATTRIBUTE + unit, unit));
+							} else {
 								throw new GLTFIllegalException("illegal morph target attribute type " + attributeName);
 							}
 						}
 					}
-					
+
 				}
-				
+
 				int bSize = bonesIndices.size * 4;
 
 				Array<VertexAttribute> bonesAttributes = new Array<VertexAttribute>();
-				for(int b=0 ; b<bSize ; b++){
+				for (int b = 0; b < bSize; b++) {
 					VertexAttribute boneAttribute = VertexAttribute.BoneWeight(b);
 					vertexAttributes.add(boneAttribute);
 					bonesAttributes.add(boneAttribute);
 				}
-				
-				if(!hasNormals){
+
+				if (!hasNormals) {
 					vertexAttributes.add(VertexAttribute.Normal());
 					glAccessors.add(null);
 				}
-				
-				VertexAttributes attributesGroup = new VertexAttributes((VertexAttribute[])vertexAttributes.toArray(VertexAttribute.class));
-				
-				int vertexFloats = attributesGroup.vertexSize/4;
-				
+
+				VertexAttributes attributesGroup = new VertexAttributes(
+						(VertexAttribute[]) vertexAttributes.toArray(VertexAttribute.class));
+
+				int vertexFloats = attributesGroup.vertexSize / 4;
+
 				int maxVertices = glAccessors.first().count;
 
-				float [] vertices = new float [maxVertices * vertexFloats];
-				
-				for(int b=0 ; b<bSize ; b++){
+				float[] vertices = new float[maxVertices * vertexFloats];
+
+				for (int b = 0; b < bSize; b++) {
 					VertexAttribute boneAttribute = bonesAttributes.get(b);
-					for(int i=0 ; i<maxVertices ; i++){
-						vertices[i * vertexFloats + boneAttribute.offset/4] = bonesIndices.get(b/4)[i * 4 + b%4];
-						vertices[i * vertexFloats + boneAttribute.offset/4+1] = bonesWeights.get(b/4)[i * 4 + b%4];
+					for (int i = 0; i < maxVertices; i++) {
+						vertices[i * vertexFloats + boneAttribute.offset / 4] = bonesIndices.get(b / 4)[i * 4 + b % 4];
+						vertices[i * vertexFloats + boneAttribute.offset / 4 + 1] = bonesWeights.get(b / 4)[i * 4
+								+ b % 4];
 					}
 				}
-				
-				for(int i=0 ; i<glAccessors.size ; i++){
+
+				for (int i = 0; i < glAccessors.size; i++) {
 					GLTFAccessor glAccessor = glAccessors.get(i);
 					VertexAttribute attribute = vertexAttributes.get(i);
-					
-					
-					if(glAccessor == null) continue;
-					
-					if(glAccessor.bufferView == null){
+
+					if (glAccessor == null)
+						continue;
+
+					if (glAccessor.bufferView == null) {
 						throw new GdxRuntimeException("bufferView is null (mesh compression ?)");
 					}
-					
+
 					GLTFBufferView glBufferView = dataResolver.getBufferView(glAccessor.bufferView);
-					
+
 					// not used for now : used for direct mesh ....
-					if(glBufferView.target != null){
-						if(glBufferView.target == 34963){ // ELEMENT_ARRAY_BUFFER
-						}else if(glBufferView.target == 34962){ // ARRAY_BUFFER
-						}else{
+					if (glBufferView.target != null) {
+						if (glBufferView.target == 34963) { // ELEMENT_ARRAY_BUFFER
+						} else if (glBufferView.target == 34962) { // ARRAY_BUFFER
+						} else {
 							throw new GdxRuntimeException("bufferView target unknown : " + glBufferView.target);
 						}
 					}
-					
+
 					FloatBuffer floatBuffer = dataResolver.getBufferFloat(glAccessor);
-					
-					// buffer can be interleaved, so we 
+
+					// buffer can be interleaved, so we
 					// in some cases we have to compute vertex stride
-					int floatStride = (glBufferView.byteStride == null ? GLTFTypes.accessorStrideSize(glAccessor) : glBufferView.byteStride) / 4;
-					
-					for(int j=0 ; j<glAccessor.count ; j++){
-						
+					int floatStride = (glBufferView.byteStride == null ? GLTFTypes.accessorStrideSize(glAccessor)
+							: glBufferView.byteStride) / 4;
+
+					for (int j = 0; j < glAccessor.count; j++) {
+
 						floatBuffer.position(j * floatStride);
-						
-						int vIndex = j * vertexFloats + attribute.offset/4;
-						
+
+						int vIndex = j * vertexFloats + attribute.offset / 4;
+
 						floatBuffer.get(vertices, vIndex, attribute.numComponents);
 					}
 				}
-				
-				if(!hasNormals){
+
+				if (!hasNormals) {
 					int posOffset = attributesGroup.getOffset(VertexAttributes.Usage.Position);
 					int normalOffset = attributesGroup.getOffset(VertexAttributes.Usage.Normal);
 					int stride = attributesGroup.vertexSize / 4;
-					
+
 					Vector3 vab = new Vector3();
 					Vector3 vac = new Vector3();
-					for(int index = 0 ; index<maxIndices ; ){
-						
+					for (int index = 0; index < maxIndices;) {
+
 						int vIndexA = indices[index++];
 						float ax = vertices[vIndexA * stride + posOffset];
-						float ay = vertices[vIndexA * stride + posOffset+1];
-						float az = vertices[vIndexA * stride + posOffset+2];
-						
+						float ay = vertices[vIndexA * stride + posOffset + 1];
+						float az = vertices[vIndexA * stride + posOffset + 2];
+
 						int vIndexB = indices[index++];
 						float bx = vertices[vIndexB * stride + posOffset];
-						float by = vertices[vIndexB * stride + posOffset+1];
-						float bz = vertices[vIndexB * stride + posOffset+2];
-						
+						float by = vertices[vIndexB * stride + posOffset + 1];
+						float bz = vertices[vIndexB * stride + posOffset + 2];
+
 						int vIndexC = indices[index++];
 						float cx = vertices[vIndexC * stride + posOffset];
-						float cy = vertices[vIndexC * stride + posOffset+1];
-						float cz = vertices[vIndexC * stride + posOffset+2];
-						
-						vab.set(bx,by,bz).sub(ax,ay,az);
-						vac.set(cx,cy,cz).sub(ax,ay,az);
+						float cy = vertices[vIndexC * stride + posOffset + 1];
+						float cz = vertices[vIndexC * stride + posOffset + 2];
+
+						vab.set(bx, by, bz).sub(ax, ay, az);
+						vac.set(cx, cy, cz).sub(ax, ay, az);
 						Vector3 n = vab.crs(vac).nor();
-						
+
 						vertices[vIndexA * stride + normalOffset] = n.x;
-						vertices[vIndexA * stride + normalOffset+1] = n.y;
-						vertices[vIndexA * stride + normalOffset+2] = n.z;
-						
+						vertices[vIndexA * stride + normalOffset + 1] = n.y;
+						vertices[vIndexA * stride + normalOffset + 2] = n.z;
+
 						vertices[vIndexB * stride + normalOffset] = n.x;
-						vertices[vIndexB * stride + normalOffset+1] = n.y;
-						vertices[vIndexB * stride + normalOffset+2] = n.z;
-						
+						vertices[vIndexB * stride + normalOffset + 1] = n.y;
+						vertices[vIndexB * stride + normalOffset + 2] = n.z;
+
 						vertices[vIndexC * stride + normalOffset] = n.x;
-						vertices[vIndexC * stride + normalOffset+1] = n.y;
-						vertices[vIndexC * stride + normalOffset+2] = n.z;
-						
+						vertices[vIndexC * stride + normalOffset + 1] = n.y;
+						vertices[vIndexC * stride + normalOffset + 2] = n.z;
+
 					}
 				}
-				
+
 				Mesh mesh = new MeshPlus(true, maxVertices, maxIndices, attributesGroup);
 				meshes.add(mesh);
 				mesh.setVertices(vertices);
-				
-				if(indices != null){
+
+				if (indices != null) {
 					mesh.setIndices(indices);
 				}
-				
+
 				int len = indices == null ? maxVertices : indices.length;
-				
+
 				MeshPart meshPart = new MeshPart(glMesh.name, mesh, 0, len, GLTFTypes.mapPrimitiveMode(primitive.mode));
-				
-				
+
 				NodePartPlus nodePart = new NodePartPlus();
-				nodePart.morphTargets = ((NodePlus)node).weights;
+				nodePart.morphTargets = ((NodePlus) node).weights;
 				nodePart.meshPart = meshPart;
-				if(primitive.material != null){
+				if (primitive.material != null) {
 					nodePart.material = materialLoader.get(primitive.material);
-				}else{
+				} else {
 					nodePart.material = materialLoader.getDefaultMaterial();
 				}
-				
+
 				parts.add(nodePart);
 			}
-			
+
 			meshMap.put(glMesh, parts);
 		}
 		node.parts.addAll(parts);
@@ -316,50 +322,49 @@ public class MeshLoader {
 
 	private int parseAttributeUnit(String attributeName) {
 		int lastUnderscoreIndex = attributeName.lastIndexOf('_');
-		try{
-			return Integer.parseInt(attributeName.substring(lastUnderscoreIndex+1));
-		}catch(NumberFormatException e){
+		try {
+			return Integer.parseInt(attributeName.substring(lastUnderscoreIndex + 1));
+		} catch (NumberFormatException e) {
 			throw new GLTFIllegalException("illegal attribute name " + attributeName);
 		}
 	}
 
 	private short[] loadIndices(GLTFPrimitive primitive, DataResolver dataResolver) {
-		short [] indices = null;
-		
-		if(primitive.indices != null){
-			
+		short[] indices = null;
+
+		if (primitive.indices != null) {
+
 			GLTFAccessor indicesAccessor = dataResolver.getAccessor(primitive.indices);
-			
-			if(!indicesAccessor.type.equals(GLTFTypes.TYPE_SCALAR)){
+
+			if (!indicesAccessor.type.equals(GLTFTypes.TYPE_SCALAR)) {
 				throw new GLTFIllegalException("indices accessor must be SCALAR but was " + indicesAccessor.type);
 			}
-				
+
 			int maxIndices = indicesAccessor.count;
 			indices = new short[maxIndices];
-			
-			switch(indicesAccessor.componentType){
-			case GLTFTypes.C_UINT:
-				{
-					IntBuffer intBuffer = dataResolver.getBufferInt(indicesAccessor);
-					long maxIndex = 0;
-					for(int i=0 ; i<maxIndices ; i++){
-						long index = intBuffer.get() & 0xFFFFFFFFL;
-						maxIndex = Math.max(index, maxIndex);
-						indices[i] = (short)(index);
-					}
-					checkMaxIndex(maxIndex);
+
+			switch (indicesAccessor.componentType) {
+			case GLTFTypes.C_UINT: {
+				IntBuffer intBuffer = dataResolver.getBufferInt(indicesAccessor);
+				long maxIndex = 0;
+				for (int i = 0; i < maxIndices; i++) {
+					long index = intBuffer.get() & 0xFFFFFFFFL;
+					maxIndex = Math.max(index, maxIndex);
+					indices[i] = (short) (index);
 				}
+				checkMaxIndex(maxIndex);
+			}
 				break;
 			case GLTFTypes.C_USHORT:
 			case GLTFTypes.C_SHORT:
 				dataResolver.getBufferShort(indicesAccessor).get(indices);
-				
+
 				int maxIndex;
-				if(indicesAccessor.max != null){
-					maxIndex = (int)indicesAccessor.max[0];
-				}else{
+				if (indicesAccessor.max != null) {
+					maxIndex = (int) indicesAccessor.max[0];
+				} else {
 					maxIndex = 0;
-					for(short i : indices){
+					for (short i : indices) {
 						maxIndex = Math.max(maxIndex, i & 0xFFFF);
 					}
 				}
@@ -367,16 +372,16 @@ public class MeshLoader {
 				break;
 			case GLTFTypes.C_UBYTE:
 				ByteBuffer byteBuffer = dataResolver.getBufferByte(indicesAccessor);
-				for(int i=0 ; i<maxIndices ; i++){
-					indices[i] = (short)(byteBuffer.get() & 0xFF);
+				for (int i = 0; i < maxIndices; i++) {
+					indices[i] = (short) (byteBuffer.get() & 0xFF);
 				}
 				break;
 			default:
 				throw new GLTFIllegalException("illegal componentType " + indicesAccessor.componentType);
 			}
-					
+
 		}
-		
+
 		return indices;
 	}
 
@@ -388,12 +393,13 @@ public class MeshLoader {
 		return meshes;
 	}
 
-	private void checkMaxIndex(long maxIndex){
-		if(maxIndex >= 1<<16){
+	private void checkMaxIndex(long maxIndex) {
+		if (maxIndex >= 1 << 16) {
 			throw new GLTFUnsupportedException("high index detected: " + maxIndex + ". Not supported");
-		}else if(maxIndex >= 1<<15){
-			Gdx.app.error(GLTFLoaderBase.TAG, "high index detected: " + maxIndex + ". Unsigned short indices are supported but still experimental");
+		} else if (maxIndex >= 1 << 15) {
+			Gdx.app.error(GLTFLoaderBase.TAG, "high index detected: " + maxIndex
+					+ ". Unsigned short indices are supported but still experimental");
 		}
 	}
-	
+
 }

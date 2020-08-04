@@ -10,5 +10,5 @@ public class GLTFIllegalException extends GLTFRuntimeException {
 	public GLTFIllegalException(String message) {
 		super(message);
 	}
-	
+
 }

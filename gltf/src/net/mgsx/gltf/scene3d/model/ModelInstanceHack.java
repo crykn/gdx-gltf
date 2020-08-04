@@ -15,42 +15,42 @@ import com.badlogic.gdx.utils.Array;
 import net.mgsx.gltf.scene3d.animation.NodeAnimationHack;
 
 /**
- * {@link ModelInstance} hack for morph targets :
- * - copy animations with {@link NodeAnimationHack}
- * - pass morph targets to shader via Renderable userData 
+ * {@link ModelInstance} hack for morph targets : - copy animations with
+ * {@link NodeAnimationHack} - pass morph targets to shader via Renderable
+ * userData
  */
-public class ModelInstanceHack extends ModelInstance
-{
+public class ModelInstanceHack extends ModelInstance {
 
 	public ModelInstanceHack(Model model) {
 		super(model);
 	}
-	
-	public ModelInstanceHack(Model model, final String... rootNodeIds){
+
+	public ModelInstanceHack(Model model, final String... rootNodeIds) {
 		super(model, rootNodeIds);
 	}
-	
+
 	@Override
-	public void copyAnimation (Animation anim, boolean shareKeyframes) {
+	public void copyAnimation(Animation anim, boolean shareKeyframes) {
 		Animation animation = new Animation();
 		animation.id = anim.id;
 		animation.duration = anim.duration;
 		for (final NodeAnimation nanim : anim.nodeAnimations) {
 			final Node node = getNode(nanim.node.id);
-			if (node == null) continue;
+			if (node == null)
+				continue;
 			NodeAnimationHack nodeAnim = new NodeAnimationHack();
 			nodeAnim.node = node;
-			
-			nodeAnim.translationMode = ((NodeAnimationHack)nanim).translationMode;
-			nodeAnim.rotationMode = ((NodeAnimationHack)nanim).rotationMode;
-			nodeAnim.scalingMode = ((NodeAnimationHack)nanim).scalingMode;
-			nodeAnim.weightsMode = ((NodeAnimationHack)nanim).weightsMode;
-			
+
+			nodeAnim.translationMode = ((NodeAnimationHack) nanim).translationMode;
+			nodeAnim.rotationMode = ((NodeAnimationHack) nanim).rotationMode;
+			nodeAnim.scalingMode = ((NodeAnimationHack) nanim).scalingMode;
+			nodeAnim.weightsMode = ((NodeAnimationHack) nanim).weightsMode;
+
 			if (shareKeyframes) {
 				nodeAnim.translation = nanim.translation;
 				nodeAnim.rotation = nanim.rotation;
 				nodeAnim.scaling = nanim.scaling;
-				nodeAnim.weights = ((NodeAnimationHack)nanim).weights;
+				nodeAnim.weights = ((NodeAnimationHack) nanim).weights;
 			} else {
 				if (nanim.translation != null) {
 					nodeAnim.translation = new Array<NodeKeyframe<Vector3>>();
@@ -67,27 +67,27 @@ public class ModelInstanceHack extends ModelInstance
 					for (final NodeKeyframe<Vector3> kf : nanim.scaling)
 						nodeAnim.scaling.add(new NodeKeyframe<Vector3>(kf.keytime, kf.value));
 				}
-				if (((NodeAnimationHack)nanim).weights != null) {
-					((NodeAnimationHack)nanim).weights = new Array<NodeKeyframe<WeightVector>>();
-					for (final NodeKeyframe<WeightVector> kf : ((NodeAnimationHack)nanim).weights)
-						((NodeAnimationHack)nanim).weights.add(new NodeKeyframe<WeightVector>(kf.keytime, kf.value));
+				if (((NodeAnimationHack) nanim).weights != null) {
+					((NodeAnimationHack) nanim).weights = new Array<NodeKeyframe<WeightVector>>();
+					for (final NodeKeyframe<WeightVector> kf : ((NodeAnimationHack) nanim).weights)
+						((NodeAnimationHack) nanim).weights.add(new NodeKeyframe<WeightVector>(kf.keytime, kf.value));
 				}
 			}
-			if (nodeAnim.translation != null || nodeAnim.rotation != null || nodeAnim.scaling != null || ((NodeAnimationHack)nanim).weights != null)
+			if (nodeAnim.translation != null || nodeAnim.rotation != null || nodeAnim.scaling != null
+					|| ((NodeAnimationHack) nanim).weights != null)
 				animation.nodeAnimations.add(nodeAnim);
 		}
-		if (animation.nodeAnimations.size > 0) animations.add(animation);
+		if (animation.nodeAnimations.size > 0)
+			animations.add(animation);
 	}
-	
+
 	@Override
-	public Renderable getRenderable (final Renderable out, final Node node, final NodePart nodePart) {
+	public Renderable getRenderable(final Renderable out, final Node node, final NodePart nodePart) {
 		super.getRenderable(out, node, nodePart);
-		if(nodePart instanceof NodePartPlus){
+		if (nodePart instanceof NodePartPlus) {
 			out.userData = ((NodePartPlus) nodePart).morphTargets;
 		}
 		return out;
 	}
-	
-	
-	
+
 }

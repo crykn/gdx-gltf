@@ -25,60 +25,60 @@ public class SceneSkybox implements RenderableProvider, Updatable, Disposable {
 	private DefaultShaderProvider shaderProvider;
 	private Model boxModel;
 	private Renderable box;
-	
-	public SceneSkybox(Cubemap cubemap){
+
+	public SceneSkybox(Cubemap cubemap) {
 		super();
-		
+
 		// create shader provider
 		Config shaderConfig = new Config();
 		String basePathName = "net/mgsx/gltf/shaders/skybox";
 		shaderConfig.vertexShader = Gdx.files.classpath(basePathName + ".vs.glsl").readString();
 		shaderConfig.fragmentShader = Gdx.files.classpath(basePathName + ".fs.glsl").readString();
-		shaderProvider =  new DefaultShaderProvider(shaderConfig);
-		
+		shaderProvider = new DefaultShaderProvider(shaderConfig);
+
 		// create box
-		float boxScale = (float)(1.0 / Math.sqrt(2.0));
-		boxModel = new ModelBuilder().createBox(boxScale, boxScale, boxScale, new Material(), VertexAttributes.Usage.Position);
+		float boxScale = (float) (1.0 / Math.sqrt(2.0));
+		boxModel = new ModelBuilder().createBox(boxScale, boxScale, boxScale, new Material(),
+				VertexAttributes.Usage.Position);
 		box = boxModel.nodes.first().parts.first().setRenderable(new Renderable());
-		
+
 		// assign environment
 		Environment env = new Environment();
 		env.set(new CubemapAttribute(CubemapAttribute.EnvironmentMap, cubemap));
 		env.set(new ColorAttribute(ColorAttribute.AmbientLight, Color.WHITE));
 		box.environment = env;
-		
+
 		// set hint to render last but before transparent ones
 		box.userData = SceneRenderableSorter.Hints.OPAQUE_LAST;
-		
+
 		// set material options : preserve background depth
 		box.material = new Material(ColorAttribute.createDiffuse(Color.WHITE));
 		box.material.set(new DepthTestAttribute(false));
-		
-		
+
 		// assign shader
 		box.shader = shaderProvider.getShader(box);
 	}
-	
-	public SceneSkybox set(Cubemap cubemap){
+
+	public SceneSkybox set(Cubemap cubemap) {
 		box.environment.set(new CubemapAttribute(CubemapAttribute.EnvironmentMap, cubemap));
 		return this;
 	}
-	
+
 	/**
 	 * @return skybox material color to be modified (default is white)
 	 */
-	public Color getColor(){
+	public Color getColor() {
 		return box.material.get(ColorAttribute.class, ColorAttribute.Diffuse).color;
 	}
-	
+
 	@Override
-	public void update(Camera camera, float delta){
+	public void update(Camera camera, float delta) {
 		// scale skybox to camera range.
-		float s = camera.far * (float)Math.sqrt(2.0);
+		float s = camera.far * (float) Math.sqrt(2.0);
 		box.worldTransform.setToScaling(s, s, s);
 		box.worldTransform.setTranslation(camera.position);
 	}
-	
+
 	@Override
 	public void getRenderables(Array<Renderable> renderables, Pool<Renderable> pool) {
 		renderables.add(box);

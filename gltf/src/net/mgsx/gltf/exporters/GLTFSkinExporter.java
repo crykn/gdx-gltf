@@ -20,32 +20,33 @@ class GLTFSkinExporter {
 		super();
 		this.base = base;
 	}
-	
-	public void export() 
-	{
+
+	public void export() {
 		// note that node.skeleton is not mandatory, it's set on root node of armature
-		
-		for(int i=0 ; i<base.nodeMapping.size ; i++){
+
+		for (int i = 0; i < base.nodeMapping.size; i++) {
 			Node node = base.nodeMapping.get(i);
 			GLTFNode glNode = base.root.nodes.get(i);
-			
+
 			// skip already exported skins (in case of multiple scene)
-			if(glNode.skin != null) continue;
-			
-			if(node.parts != null){
-				for(NodePart part : node.parts){
-					if(part.invBoneBindTransforms != null){
+			if (glNode.skin != null)
+				continue;
+
+			if (node.parts != null) {
+				for (NodePart part : node.parts) {
+					if (part.invBoneBindTransforms != null) {
 						// here we can create a new skin
 						GLTFSkin skin = new GLTFSkin();
-						if(base.root.skins == null) base.root.skins = new Array<GLTFSkin>();
+						if (base.root.skins == null)
+							base.root.skins = new Array<GLTFSkin>();
 						base.root.skins.add(skin);
-						glNode.skin = base.root.skins.size-1;
-						
+						glNode.skin = base.root.skins.size - 1;
+
 						skin.joints = new Array<Integer>();
-						
+
 						FloatBuffer matrixBuffer = base.binManager.beginFloats(part.invBoneBindTransforms.size * 16);
-						
-						for(Entry<Node, Matrix4> e : part.invBoneBindTransforms){
+
+						for (Entry<Node, Matrix4> e : part.invBoneBindTransforms) {
 							int boneID = base.nodeMapping.indexOf(e.key, true);
 							skin.joints.add(boneID);
 							matrixBuffer.put(e.value.val);
@@ -55,12 +56,12 @@ class GLTFSkinExporter {
 						accessor.type = GLTFTypes.TYPE_MAT4;
 						accessor.componentType = GLTFTypes.C_FLOAT;
 						accessor.count = part.invBoneBindTransforms.size;
-						
-						skin.inverseBindMatrices = base.root.accessors.size-1;
+
+						skin.inverseBindMatrices = base.root.accessors.size - 1;
 					}
 				}
 			}
-			
+
 		}
 	}
 }

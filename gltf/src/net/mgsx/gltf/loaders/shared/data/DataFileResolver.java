@@ -10,7 +10,10 @@ import net.mgsx.gltf.data.texture.GLTFImage;
 
 public interface DataFileResolver {
 	public void load(FileHandle file);
+
 	public GLTF getRoot();
+
 	public ByteBuffer getBuffer(int buffer);
+
 	public Pixmap load(GLTFImage glImage);
 }

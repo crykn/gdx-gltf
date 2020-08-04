@@ -6,5 +6,5 @@ import net.mgsx.gltf.data.GLTFEntity;
 
 public class GLTFMesh extends GLTFEntity {
 	public Array<GLTFPrimitive> primitives;
-	public float [] weights;
+	public float[] weights;
 }

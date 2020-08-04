@@ -6,12 +6,12 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 public class WeightVector {
 
 	public int count;
-	public float [] values;
+	public float[] values;
 
 	public WeightVector() {
 		this(0, 8);
 	}
-	
+
 	public WeightVector(int count) {
 		this(count, 8);
 	}
@@ -22,29 +22,31 @@ public class WeightVector {
 	}
 
 	public WeightVector set(WeightVector weights) {
-		if(weights.count > values.length){
+		if (weights.count > values.length) {
 			values = new float[weights.count];
 		}
-			// throw new GdxRuntimeException("WeightVector out of bound");
+		// throw new GdxRuntimeException("WeightVector out of bound");
 		this.count = weights.count;
-		for(int i=0 ; i<weights.values.length ; i++){
+		for (int i = 0; i < weights.values.length; i++) {
 			values[i] = weights.values[i];
 		}
 		return this;
 	}
 
 	public void lerp(WeightVector value, float t) {
-		if(count != value.count) throw new GdxRuntimeException("WeightVector count mismatch");
-		for(int i=0 ; i<count ; i++){
+		if (count != value.count)
+			throw new GdxRuntimeException("WeightVector count mismatch");
+		for (int i = 0; i < count; i++) {
 			values[i] = MathUtils.lerp(values[i], value.values[i], t);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		String s = "WeightVector(";
-		for(int i=0 ; i<count ; i++){
-			if(i > 0) s += ", ";
+		for (int i = 0; i < count; i++) {
+			if (i > 0)
+				s += ", ";
 			s += values[i];
 		}
 		return s + ")";
@@ -64,14 +66,14 @@ public class WeightVector {
 	}
 
 	public WeightVector scl(float s) {
-		for(int i=0 ; i<count ; i++){
+		for (int i = 0; i < count; i++) {
 			values[i] *= s;
 		}
 		return this;
 	}
 
 	public WeightVector mulAdd(WeightVector w, float s) {
-		for(int i=0 ; i<count ; i++){
+		for (int i = 0; i < count; i++) {
 			values[i] += w.values[i] * s;
 		}
 		return this;

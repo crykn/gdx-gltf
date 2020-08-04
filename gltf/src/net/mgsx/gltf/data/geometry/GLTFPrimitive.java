@@ -11,5 +11,5 @@ public class GLTFPrimitive extends GLTFObject {
 	public Integer mode;
 	public Integer material;
 	public Array<GLTFMorphTarget> targets;
-	
+
 }

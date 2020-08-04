@@ -7,8 +7,8 @@ public class GLTFAccessor extends GLTFEntity {
 	public boolean normalized = false;
 	public int byteOffset = 0, componentType, count;
 	public String type;
-	public float [] min;
-	public float [] max;
-	
+	public float[] min;
+	public float[] max;
+
 	public GLTFAccessorSparse sparse;
 }

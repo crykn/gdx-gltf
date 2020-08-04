@@ -1,7 +1,6 @@
 package net.mgsx.gltf.scene3d.attributes;
 
-public class PBRVertexAttributes
-{
+public class PBRVertexAttributes {
 	// based on VertexAttributes maximum (biNormal = 256)
 	public static final class Usage {
 		public static final int PositionTarget = 512;

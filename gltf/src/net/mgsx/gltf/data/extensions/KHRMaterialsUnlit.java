@@ -2,6 +2,7 @@ package net.mgsx.gltf.data.extensions;
 
 /**
  * {@link net.mgsx.gltf.data.material.GLTFMaterial} extension
+ * 
  * @see https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_unlit
  */
 public class KHRMaterialsUnlit {
