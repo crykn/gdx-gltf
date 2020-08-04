@@ -290,6 +290,11 @@ public class SceneManager implements Disposable {
 
 	@Override
 	public void dispose() {
+		skyBox.dispose();
+		for (RenderableProvider r : renderableProviders) {
+			if (r instanceof Disposable)
+				((Disposable) r).dispose();
+		}
 		batch.dispose();
 		depthBatch.dispose();
 	}

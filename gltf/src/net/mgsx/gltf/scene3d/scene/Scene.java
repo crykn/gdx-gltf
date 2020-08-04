@@ -189,6 +189,14 @@ public class Scene implements RenderableProvider, Updatable {
 		return count;
 	}
 
+	public void translateModel(float x, float y, float z) {
+		modelInstance.transform.translate(x, y, z);
+	}
+
+	public void rotateModel(Vector3 axis, float degrees) {
+		modelInstance.transform.rotate(axis, degrees);
+	}
+
 	@Override
 	public void getRenderables(Array<Renderable> renderables, Pool<Renderable> pool) {
 		modelInstance.getRenderables(renderables, pool);

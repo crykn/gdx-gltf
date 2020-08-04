@@ -16,25 +16,28 @@ import com.badlogic.gdx.graphics.g3d.attributes.DepthTestAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader.Config;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Pool;
 
 public class SceneSkybox implements RenderableProvider, Updatable, Disposable {
 
-	private DefaultShaderProvider shaderProvider;
+	private ShaderProvider shaderProvider;
 	private Model boxModel;
 	private Renderable box;
 
 	public SceneSkybox(Cubemap cubemap) {
+		this(cubemap,
+				new DefaultShaderProvider(
+						new Config(Gdx.files.classpath("net/mgsx/gltf/shaders/skybox.vs.glsl").readString(),
+								Gdx.files.classpath("net/mgsx/gltf/shaders/skybox.fs.glsl").readString())));
+	}
+
+	public SceneSkybox(Cubemap cubemap, ShaderProvider shaderProvider) {
 		super();
 
-		// create shader provider
-		Config shaderConfig = new Config();
-		String basePathName = "net/mgsx/gltf/shaders/skybox";
-		shaderConfig.vertexShader = Gdx.files.classpath(basePathName + ".vs.glsl").readString();
-		shaderConfig.fragmentShader = Gdx.files.classpath(basePathName + ".fs.glsl").readString();
-		shaderProvider = new DefaultShaderProvider(shaderConfig);
+		this.shaderProvider = shaderProvider;
 
 		// create box
 		float boxScale = (float) (1.0 / Math.sqrt(2.0));
